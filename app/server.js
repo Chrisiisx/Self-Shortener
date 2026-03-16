@@ -14,12 +14,12 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cors());
 
 
-let GATEWAY_URL = null;
-while(GATEWAY_URL == null){
+let PUBLIC_URL = null;
+while(PUBLIC_URL == null){
   try{
 
     const url = fs.readFileSync("/shared/tunnel_url.txt", 'utf-8').trim() 
-    if(url) GATEWAY_URL = url
+    if(url) PUBLIC_URL = url
 
   }catch(e){
     console.log(e)
@@ -37,6 +37,6 @@ app.listen(PORT, () => {
   console.log(`
   🚀 Server Express started with success!
   📡 Listening on: http://localhost:${PORT}
-  🌐 Public URL: ${GATEWAY_URL}
+  🌐 Public URL: ${PUBLIC_URL}
   `);
 });
