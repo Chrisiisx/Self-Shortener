@@ -2,6 +2,7 @@
 const express = require('express');
 const cors = require('cors');
 const path = require("path")
+const fs = require("fs")
 require('dotenv').config();
 
 // Inizializzazione app
@@ -12,6 +13,18 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors());
 
+
+let GATEWAY_URL = null;
+while(GATEWAY_URL == null){
+  try{
+
+    const url = fs.readFileSync("/shared/tunnel_url.txt", 'utf-8').trim() 
+    if(url) GATEWAY_URL = url
+
+  }catch(e){
+    console.log(e)
+  }
+}
 // === ROTTE ===
 
 // Rotta di test - Home
@@ -24,5 +37,6 @@ app.listen(PORT, () => {
   console.log(`
   🚀 Server Express started with success!
   📡 Listening on: http://localhost:${PORT}
+  🌐 Public URL: ${GATEWAY_URL}
   `);
 });

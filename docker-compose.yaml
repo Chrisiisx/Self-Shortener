@@ -5,19 +5,22 @@ services:
       context: ./app
       dockerfile: Dockerfile
     environment:
-    - SERVER_PORT=${SERVER_PORT}
+      - SERVER_PORT=${SERVER_PORT}
     volumes:
       - ./app:/app
       - ./app/data:/app/data
       - shared:/shared
     ports:
-      - :${SERVER_PORT}:${SERVER_PORT}
-
+      - ${SERVER_PORT}:${SERVER_PORT}
+    networks:
+      - internal
 
   cloudflared:
-    container_name: cloudflare 
+    container_name: cloudflare
     image: cloudflare/cloudflared
-    command: tunnel --url http://app:${SERVER_PORT}
+    command: tunnel --url http://server:${SERVER_PORT}
+    networks:
+      - internal
 
   tunnel-helper:
     image: alpine
@@ -27,21 +30,28 @@ services:
     volumes:
       - shared:/shared
       - /var/run/docker.sock:/var/run/docker.sock
-    command: |
-      sh -c "
+    networks:
+      - internal
+    command:
+      - sh
+      - -c
+      - |
         apk add --no-cache docker-cli &&
         echo 'Waiting for tunnel URL...' &&
-        until docker logs cloudflared 2>&1 | grep -o 'https://[a-z0-9-]*\.trycloudflare\.com' > /shared/tunnel_url.txt; do
+        until docker logs cloudflare 2>&1 | grep -o 'https://[a-z0-9-]*\.trycloudflare\.com' > /shared/tunnel_url.txt && [ -s /shared/tunnel_url.txt ]; do
           sleep 1
         done &&
         echo 'URL found!' &&
         cat /shared/tunnel_url.txt
-      "
     healthcheck:
       test: ["CMD", "test", "-s", "/shared/tunnel_url.txt"]
       interval: 2s
       timeout: 5s
       retries: 30
+
+networks:
+  internal:
+    driver: bridge
 
 volumes:
   shared:
